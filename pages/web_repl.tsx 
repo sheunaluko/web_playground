@@ -3,6 +3,14 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 
+import { 
+  Input, 
+  Stack,
+  InputGroup, 
+  InputLeftAddon, 
+  InputRightAddon,   
+} from '@chakra-ui/react'
+
 const Home: NextPage = () => {
   return (
     <div className={styles.container}>
@@ -17,6 +25,22 @@ const Home: NextPage = () => {
           WEB REPL
         </h1>
       </main>
+
+          <Stack spacing={4}>
+      <InputGroup>
+        <InputLeftAddon children='+234' />
+        <Input type='tel' placeholder='phone number' />
+      </InputGroup>
+
+      {/* If you add the size prop to `InputGroup`, it'll pass it to all its children. */}
+      <InputGroup size='sm'>
+        <InputLeftAddon children='https://' />
+        <Input placeholder='mysite' />
+        <InputRightAddon children='.com' />
+      </InputGroup>
+    </Stack>
+
+
 
       <footer className={styles.footer}>
         <a
@@ -35,3 +59,4 @@ const Home: NextPage = () => {
 }
 
 export default Home
+

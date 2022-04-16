@@ -1,9 +1,70 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
+import {useEffect, useState, Fragment} from 'react'
 import styles from '../styles/Home.module.css'
 
-const Home: NextPage = () => {
+import { 
+  Input, 
+  Stack,
+  InputGroup, 
+  InputLeftAddon, 
+  InputRightAddon,   
+  Divider , 
+  Text, 
+} from '@chakra-ui/react'
+
+//import {debounce} from 'lodash' ; 
+
+// Originally inspired by  David Walsh (https://davidwalsh.name/javascript-debounce-function)
+
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// `wait` milliseconds.
+const debounce = (func, wait) => {
+  let timeout;
+
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+const Home: NextPage = function() {
+
+  const [state, setState] = useState( [] as any)  ; 
+
+  useEffect( ()=> {
+
+    console.log("Setting effect")
+    var mainInput = document.querySelector("#mainInput") as any    ; 
+    var handle_enter = debounce( function (e: any) {
+      if (e.key === 'Enter') {
+          // Do something
+          //alert(mainInput.value)
+          setState( state => state.concat(mainInput.value) ) 
+      }
+    } , 6) 
+
+    mainInput.addEventListener('keyup', handle_enter)    ;
+
+    return () => {
+      //cleanup is necessary! 
+      console.log("Removing effect") ; 
+      mainInput.removeEventListener('keyup', handle_enter )
+    }
+
+  }, [])
+
+
+
+
+    
   return (
     <div className={styles.container}>
       <Head>
@@ -16,24 +77,31 @@ const Home: NextPage = () => {
         <h1 className={styles.title}>
           WEB REPL
         </h1>
-	
-      </main>
-
-    <footer className={styles.footer}>
-        <a
-          href="https://github.com/sheunaluko"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Created by Sheun Aluko
-
-        </a>
-      </footer>
       
+
+          <Stack spacing={4}>
+      <InputGroup>
+        <InputLeftAddon children='>' />
+        <Input id="mainInput" type='tel' placeholder='enter command...' focusBorderColor='null'  />
+      </InputGroup>
+
+      {state.map( function(h:any) {
+        return (
+          <Fragment key={h}> 
+          <Divider />
+          <Text>{h}</Text>
+          </Fragment>
+        )
+      })}
+
+    </Stack>
+
+    </main>
+
+
     </div>
   )
 }
 
-export default Home
-
+export default Home ; 
 
