@@ -26,30 +26,9 @@ const Home: NextPage = function() {
 
   useEffect( ()=> {
 
-    console.log("Setting effect")
-    var mainInput = document.querySelector("#mainInput") as any    ; 
-    var handle_enter = debounce( function (e: any) {
-      if (e.key === 'Enter') {
-          // Do something
-          //alert(mainInput.value)
-          setState( state => state.concat(mainInput.value) ) 
-      }
-    } , 6) 
-
-    mainInput.addEventListener('keyup', handle_enter)    ;
-
-    return () => {
-      //cleanup is necessary! 
-      console.log("Removing effect") ; 
-      mainInput.removeEventListener('keyup', handle_enter )
-    }
 
   }, [])
 
-
-
-
-    
   return (
     <div className={styles.container}>
       <Head>

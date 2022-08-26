@@ -3,13 +3,30 @@ import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 
+
+
+import { 
+  Input, 
+  Stack,
+  InputGroup, 
+  InputLeftAddon, 
+  InputRightAddon,   
+  Divider , 
+  Text, 
+} from '@chakra-ui/react'
+
+
+
 type CardOps = {  link:string, title: string, desc: string } 
 
 function Card( ops : CardOps) {
     return (
         <a key={ops.link} href={ops.link} className={styles.card}>
           <h2>{ops.title} &rarr;</h2>
-          <p>{ops.desc}</p>
+          <Divider/>
+          <box className={styles.cardContent}>
+            <p>{ops.desc}</p>
+          </box>
           </a>
     ) ; 
 }
@@ -18,7 +35,9 @@ const PlaygroundApps = [
     { link : "/webrepl" ,
       title  : "Web Repl" ,
       desc : "Connects to a running node repl via the browser and enhances it with UI based functionality (data visualization)"  } ,
-
+    { link : "/abx" ,
+      title : "Antibiosis",
+      desc : "Antibiotic Visualization Application" } , 
     
 ]
 
