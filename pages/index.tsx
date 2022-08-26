@@ -12,7 +12,8 @@ import {
   InputLeftAddon, 
   InputRightAddon,   
   Divider , 
-  Text, 
+    Text,
+    Box
 } from '@chakra-ui/react'
 
 
@@ -24,9 +25,9 @@ function Card( ops : CardOps) {
         <a key={ops.link} href={ops.link} className={styles.card}>
           <h2>{ops.title} &rarr;</h2>
           <Divider/>
-          <box className={styles.cardContent}>
+          <Box className={styles.cardContent}>
             <p>{ops.desc}</p>
-          </box>
+          </Box>
           </a>
     ) ; 
 }

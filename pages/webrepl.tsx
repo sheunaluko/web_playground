@@ -77,7 +77,7 @@ const Home: NextPage = function() {
 
           
       <InputGroup>
-        <InputLeftAddon children='>' />
+        <InputLeftAddon>{">"}</InputLeftAddon>
         <Input id="mainInput" type='tel' placeholder='enter command...' focusBorderColor='null'  />
       </InputGroup>
 

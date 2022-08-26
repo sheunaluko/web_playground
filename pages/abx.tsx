@@ -4,6 +4,9 @@ import Image from 'next/image'
 import {useEffect, useState, Fragment} from 'react'
 import styles from '../styles/abx.module.css'
 
+import { GetStaticProps, InferGetStaticPropsType } from 'next'
+
+
 import { tidyscripts_web as  tw } from "tidyscripts_web" ;
 
 import { 
@@ -34,7 +37,7 @@ import { SmallCloseIcon } from '@chakra-ui/icons';
 
 import {debounce} from 'lodash' ; 
 
-export async function getStaticProps() {
+export const getStaticProps : GetStaticProps = async (context) => {
 
     let sg = await import("../src/sanford") ;
 
@@ -51,10 +54,14 @@ export async function getStaticProps() {
     }
 }
 
-const Home: NextPage = function({data}) {
+declare var window  : any ;
 
+const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStaticProps> ) {
+
+    var data =  props.data  ; 
     
-    if (typeof window === "undefined") { /* we're on the server */ } else { 
+    if (typeof window === "undefined") { /* we're on the server */ } else {
+
         window.tw = tw ;
         window.abx_data = data ; 
 
@@ -107,11 +114,11 @@ const Home: NextPage = function({data}) {
               }}>
                 {
                     data.bugs.map( (b:string) => (
-                <option value={b}>{b}</option>
+                <option key={b} value={b}>{b}</option>
                     ))}
               </Select>
 
-              <stack>
+              <Stack>
                 <Flex mt='3px' flexDirection="row" flexWrap="wrap" className={styles.bug_tag_container}>                
                   {
                       selected_bugs.map( (b:string) => (
@@ -126,7 +133,7 @@ const Home: NextPage = function({data}) {
                       ))}
                 </Flex>                      
 
-              </stack>
+              </Stack>
             </Box>
 
             <Text mt='3px'>See Antibiotics</Text> 
