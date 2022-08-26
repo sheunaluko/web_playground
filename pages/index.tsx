@@ -36,7 +36,8 @@ const PlaygroundApps = [
     { link : "/webrepl" ,
       title  : "Web Repl" ,
       desc : "Connects to a running node repl via the browser and enhances it with UI based functionality (data visualization)"  } ,
-      */ 
+    */
+    
     { link : "/abx" ,
       title : "Antibiosis",
       desc : "Antibiotic Visualization Application" } , 
