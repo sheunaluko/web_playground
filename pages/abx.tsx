@@ -64,16 +64,25 @@ const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStatic
 
         window.tw = tw ;
         window.abx_data = data ; 
+	
 
-        /* 
-          let l1 = ["Actinomyces sp." , "Clostridium sp." , "E. faecium (VRE)"]
-          let l2 = ["E. faecium (VRE)" ,  "Actinomyces sp." , "Clostridium sp."]
+        let l1 = ["Actinomyces sp." , "Clostridium sp." , "E. faecium (VRE)"]
+        let l2 = ["E. faecium (VRE)" ,  "Actinomyces sp." , "Clostridium sp."]
 
-          Object.assign(window, {
-          l1, l2,  analyze_treatment_options, sort_abx_list 
-          })
+        Object.assign(window, {
+            l1, l2,  analyze_treatment_options, sort_abx_list , 
+	    cartesian , 
+	    get_multi_regimens , 
+	    get_preferred_or_susceptible_arrays , 
+	    multi_score , 
+	    activity_spectrum, 
+	    activity_spectrum_magnitude , 
+	    combined_activity_spectrum, 
+	    combined_activity_spectrum_magnitude,
+	    set_union, 
+	 
+        })
 
-        */ 
     } 
     
     const [ selected_bugs, set_bugs ] = useState( [] as any ) ;
@@ -241,4 +250,54 @@ export function get_scores( d : string[][] )  {
 	}) 
     }
     return tw.common.R.sortBy( (a:any)=> -a[1] , Object.entries(scores) ) 
+} 
+
+
+export function cartesian(...a) { 
+    //https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
+    return a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat()  ))); 
+} 
+
+
+export function activity_spectrum_magnitude(aba : any , abx : string) { 
+    return activity_spectrum(aba, abx).size ; 
+} 
+
+export function activity_spectrum(aba : any, abx : string) { 
+    return new Set(aba[abx]['preferred'].concat(aba[abx]['susceptible']))
+} 
+
+export function set_union(a:Set<string>,b:Set<string>){ 
+    //@ts-ignore
+    return new Set([...a,...b])
+} 
+
+export function combined_activity_spectrum(aba : any , abxs : string[]) { 
+    
+    //@ts-ignore
+    return abxs.map( (abx:string)=> activity_spectrum(aba,abx)).reduce( set_union )
+} 
+
+export function combined_activity_spectrum_magnitude(aba : any , abxs : string[]){
+    return combined_activity_spectrum(aba,abxs).size 
+} 
+
+export function multi_score(aba : any , abxs : string[]) { 
+    return combined_activity_spectrum_magnitude( aba, abxs)     
+} 
+
+export function get_multi_regimens(ranked_sus: any , abx_by_activity : any , b : string[]) { 
+    //1. 
+    let arrs = get_preferred_or_susceptible_arrays(ranked_sus,b) ; 
+    //2. 
+    let ops = cartesian(...arrs).map(function(abxs : string[]) {
+	let s = tw.common.R.uniq(abxs) ; 
+	return { 
+	    abx : s , 
+	    score : multi_score(abx_by_activity,s) 
+	} 
+    })
+    //3. 
+    ops.sort(tw.common.fp.sort_by_prop("score"))
+    return ops  ; 
 } 
