@@ -21,7 +21,10 @@ import {
     Text,
     Select ,
     Flex,
-    Badge, 
+    Badge,
+    CircularProgress,
+    CircularProgressLabel,
+    Progress
 } from '@chakra-ui/react'
 
 import {
@@ -79,30 +82,43 @@ const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStatic
 	    activity_spectrum_magnitude , 
 	    combined_activity_spectrum, 
 	    combined_activity_spectrum_magnitude,
-	    set_union, 
+	    set_union,
+            get_regimen_annotation,
+            get_contextual_coverage , 
 	 
         })
 
     } 
     
+
     const [ selected_bugs, set_bugs ] = useState( [] as any ) ;
+    const [ thinking, set_thinking ] = useState( false ) ;    
     const [ treatment_options, set_treatment_options ] = useState( [] as any ) ;
 
 
     let update_bugs = function(new_bugs : string[]) {
         set_bugs( new_bugs  ) ;
-        let new_abx = analyze_treatment_options(data.ranked_sus, new_bugs) ;
-        console.log(new_abx) 
-        set_treatment_options(new_abx) ;                   
+        if (new_bugs.length) {
+            let new_abx = get_multi_regimens(data.ranked_sus, data.abx_by_activity, new_bugs) ;
+            console.log(new_abx) ;
+            set_treatment_options(new_abx) ;
+            set_thinking(false) ; 
+        } else {
+            set_treatment_options([]) ;
+            set_thinking(false) ; 
+        }
+
     }
 
+    /*
     useEffect( ()=> {
         if ( false) { 
             let l1 = ["Actinomyces sp." , "Clostridium sp." , "E. faecium (VRE)"]
             let l2 = ["E. faecium (VRE)" ,  "Actinomyces sp." , "Clostridium sp."]
             update_bugs(l1)
         } 
-    }, []) 
+    }, []) ;
+    */
 
     return (
         <div className={styles.container}>
@@ -116,10 +132,15 @@ const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStatic
               Antibiosis 
             </h1>
 
+            <Box mb="20px">
+              { thinking ? <Text>Analyzing All Combinations...</Text>   : <Text> Awaiting Input...  </Text>  } 
+            </Box>
+
             <Box className={styles.bug_select}>
               <Select placeholder='Select Bugs' onChange={function(e){
-                  let new_bugs = tw.common.fp.im_push(selected_bugs,e.target.value) ; 
-                  update_bugs(new_bugs)  ; 
+                  set_thinking(true) ; 
+                  let new_bugs = tw.common.fp.im_push(selected_bugs,e.target.value) ;
+                  setTimeout( ()=> update_bugs(new_bugs)  ) ; 
               }}>
                 {
                     data.bugs.map( (b:string) => (
@@ -133,8 +154,8 @@ const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStatic
                       selected_bugs.map( (b:string) => (
 
                   <Tag size={'sm'} key={b} variant='outline' colorScheme='blue' className={styles.bug_tag} onClick={function(){
-                      let new_bugs = tw.common.fp.im_arr_rm(selected_bugs,b); 
-                      update_bugs(new_bugs) ; 
+                      let new_bugs = tw.common.fp.im_arr_rm(selected_bugs,b);
+                      update_bugs(new_bugs) ;
                   }} >
                     <TagLabel>{b}</TagLabel>
                     <TagRightIcon as={SmallCloseIcon} />
@@ -148,22 +169,29 @@ const Home: NextPage = function(props : InferGetStaticPropsType<typeof getStatic
             <Text mt='3px'>See Antibiotics</Text> 
 
             <Box className={styles.abx_display}>
-              <Flex flexDirection="row" flexWrap="wrap" className={styles.bug_tag_container}>                
-                {
-                    treatment_options.map( (d) => (
-
-                        <Text mr='2' key={d.name}>
-                  {d.name}
-                  {
-                      d.bugs.map((b)=> (
-                          <Badge key={b.bug} ml='1' colorScheme={b.level == "preferred" ? "green" : "blue" }>
-                            {b.bug} 
-                          </Badge>
-                      ))
-                  } 
-                </Text>
-                        
+              <Flex flexDirection="column" className={styles.bug_tag_container}>                
+                 {
+                     treatment_options.map( (d:any)=> (
+                <Flex  flexDirection="row" key={d.abxs.join("") + d.score}>
+                  <Text>
+                    <Badge ml="3px" mr="3px" colorScheme={"gray"}>{d.score}</Badge>                          </Text>
+                  {d.abxs.map( (a:string)=> (
+                  <Text key={a}>
+                    {a}
+                    
+                    {d.annotation[a]['preferred'].map( (bug:string)=> (
+                    <Badge key={bug} ml="3px" colorScheme={"green"}>{bug}</Badge>                        
                     ))}
+
+                    {d.annotation[a]['susceptible'].map( (bug:string)=> (
+                    <Badge key={ bug} ml="3px"  colorScheme={"blue"}>{bug}</Badge>                        
+                    ))}
+                    
+                  </Text>                      
+                  ))}
+                </Flex>
+                     ))
+                 }
               </Flex>                      
 
 
@@ -233,6 +261,12 @@ function sort_abx_list(x:any) {
 
 export function get_preferred_or_susceptible_arrays(ranked_sus : any , bs : string[]) {
     return bs.map( (b:string) => ranked_sus[b]['preferred'].concat(ranked_sus[b]['susceptible'])  ) 
+}
+
+export function get_preferred_or_susceptible_set( ranked_sus : any , bs : string[] ) {
+    let arrs = get_preferred_or_susceptible_arrays(ranked_sus, bs )  ;
+    //@ts-ignore
+    return arrs.map( (a:any)=>new Set(a)) . reduce ( set_union) 
 } 
 
 export function get_preferred_or_susceptible_scores(rs : any , bs : string[]) {
@@ -270,10 +304,11 @@ export function activity_spectrum(aba : any, abx : string) {
 export function set_union(a:Set<string>,b:Set<string>){ 
     //@ts-ignore
     return new Set([...a,...b])
-} 
+}
+
+
 
 export function combined_activity_spectrum(aba : any , abxs : string[]) { 
-    
     //@ts-ignore
     return abxs.map( (abx:string)=> activity_spectrum(aba,abx)).reduce( set_union )
 } 
@@ -282,22 +317,96 @@ export function combined_activity_spectrum_magnitude(aba : any , abxs : string[]
     return combined_activity_spectrum(aba,abxs).size 
 } 
 
-export function multi_score(aba : any , abxs : string[]) { 
-    return combined_activity_spectrum_magnitude( aba, abxs)     
+export function combined_activity_spectrum_magnitude_penalized(aba : any , abxs : string[]){
+    return abxs.map( (abx:string)=> activity_spectrum_magnitude(aba,abx)).reduce( tw.common.R.add)  ;  
 } 
+
+export function multi_score(aba : any , abxs : string[]) { 
+    return combined_activity_spectrum_magnitude_penalized( aba, abxs)     
+} 
+
+export function get_multi_regimens_pending(ranked_sus: any , abx_by_activity : any , bugs : string[]) { 
+    // get abx candidates
+    let abx_candidates = get_preferred_or_susceptible_set( ranked_sus, bugs)  ;
+    
+    // sort the abx canditates by their contextual coverage
+    //@ts-ignore
+    let result = Array.from(abx_candidates).map( (abx:string)=> {
+
+        let {coverage_id, info } = get_contextual_coverage(abx_by_activity, bugs, abx);
+        return { 
+            coverage_id, 
+            info , 
+            abx,
+            score : activity_spectrum_magnitude(abx_by_activity, abx) , 
+        } ; 
+    }) ;
+
+
+    /* 
+       - - 
+     */
+    let R =  tw.common.R ;
+    let byCov  =  R.groupBy(R.prop('coverage_id')) ; 
+    result  =  byCov(result) ;
+    R.keys(result).map( (k:string)=> result[k].sort(tw.common.fp.sort_by_prop("score")) ) ;
+    return result 
+    
+
+}
+
+/*
+  Algorithm for generating multi regimens 
+*/
 
 export function get_multi_regimens(ranked_sus: any , abx_by_activity : any , b : string[]) { 
     //1. 
     let arrs = get_preferred_or_susceptible_arrays(ranked_sus,b) ; 
-    //2. 
+    //2.
+
     let ops = cartesian(...arrs).map(function(abxs : string[]) {
-	let s = tw.common.R.uniq(abxs) ; 
+        if (tw.common.R.is(String)(abxs)) {
+            //@ts-ignore             
+            abxs = [abxs] ; 
+        }
+        
+	let s = tw.common.R.uniq(abxs) ;
+        let score = multi_score(abx_by_activity,s) ;
+        let rank_id = `${s.length}${score}` ; 
 	return { 
-	    abx : s , 
-	    score : multi_score(abx_by_activity,s) 
+	    abxs : s , 
+	    score ,
+            rank_id  , 
+            annotation : get_regimen_annotation(abx_by_activity, s , b) ,
 	} 
-    })
+    }) ; 
     //3. 
-    ops.sort(tw.common.fp.sort_by_prop("score"))
+    ops.sort(tw.common.fp.sort_by_prop("rank_id")) ; 
     return ops  ; 
+}
+
+export function get_regimen_annotation( aba : any , abxs : string[], bugs : string[] ) {
+    let result : any = {} ;
+    let included = (b:string) =>  ( bugs.indexOf(b) > -1 ) ; 
+    abxs.map( function(abx: string) {
+        result[abx] = {} ;
+        result[abx]['susceptible']  = aba[abx].susceptible.filter(included) ;
+        result[abx]['preferred']  = aba[abx].preferred.filter(included) ;         
+    });
+    return result
+} 
+
+
+export function get_contextual_coverage( aba : any , bugs : string[] , abx : string) {
+
+    let included = (b:string) =>  ( bugs.indexOf(b) > -1 ) ;     
+    let susceptible = aba[abx].susceptible.filter(included) ; 
+    let preferred = aba[abx].preferred.filter(included) ;
+    let coverage_id = susceptible.concat(preferred).sort().join(" | ") ; 
+    return {
+        coverage_id ,
+        info : {
+            susceptible, preferred 
+        }
+    }  ; 
 } 
