@@ -41,7 +41,16 @@ const PlaygroundApps = [
     
     { link : "/abx" ,
       title : "Antibiosis",
-      desc : "Antibiotic Visualization Application" } , 
+      desc : "Antibiotic Regimen Selection App" } ,
+    {
+        link : "/pharmacosis" ,
+        title : "Pharmacosis" ,
+        desc : "Antibiotic Coverage Visualizer App" } ,
+    {
+        link : "/three" ,
+        title : "3d" ,
+        desc : "Threejs Dev" } ,
+    
     
 ]
 
